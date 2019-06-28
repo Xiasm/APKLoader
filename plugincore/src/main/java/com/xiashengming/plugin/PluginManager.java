@@ -1,10 +1,12 @@
 package com.xiashengming.plugin;
 
+import android.app.ActivityThread;
 import android.app.Application;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.os.Handler;
 
-import com.xiashengming.plugin.delegate.ActivityManagerDelegate;
+import com.xiashengming.plugin.delegate.InstrumentationDelegate;
 import com.xiashengming.plugin.delegate.ActivityThreadHandlerCallback;
 import com.xiashengming.plugin.utils.RefInvoke;
 
@@ -39,43 +41,22 @@ public class PluginManager {
     }
 
     public void init() {
-        hookActivityManager();
+        hookInstrumentation();
 
         hookActivityThreadHandler();
     }
 
-    private void hookActivityManager() {
-        try {
-            //获取ActivityManagerNative中的gDefault单例
-            Object gDefault = RefInvoke.getStaticFieldObject(
-                    "android.app.ActivityManagerNative", "gDefault");
-
-            //gDefault是一个android.util.Singleton 对象，内部有mInstance字段，
-            // 即AMS返回多来的Binder转换为ActivityManagerProxy对象，继承自IActivityManager
-            Object mInstance = RefInvoke.getFieldObject("android.util.Singleton", gDefault, "mInstance");
-
-            Class<?> iActivityManagerClass = Class.forName("android.app.IActivityManager");
-
-            //动态代理 IActivityManager
-            Object proxymInstance = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                    new Class[]{iActivityManagerClass},
-                    new ActivityManagerDelegate(mInstance));
-            RefInvoke.setFieldObject("android.util.Singleton", gDefault, "mInstance", proxymInstance);
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            throw new PluginException("hook IActivityManager 失败！", e.getException());
-        }
+    private void hookInstrumentation() {
+        //1.运行时拿到Instrumentation
+        ActivityThread activityThread = ActivityThread.currentActivityThread();
+        Instrumentation instrumentation = activityThread.getInstrumentation();
+        //2.设置代理
+        InstrumentationDelegate delegate = new InstrumentationDelegate(instrumentation);
+        RefInvoke.setFieldObject(activityThread, "mInstrumentation", delegate);
     }
 
     private void hookActivityThreadHandler() {
-        //获取到当前进程的 ActivityThread 对象
-        Object currentActivityThread = RefInvoke.getStaticFieldObject("android.app.ActivityThread", "sCurrentActivityThread");
 
-        //获取到 ActivityThread 内部的 mH 对象
-        Handler mH = (Handler) RefInvoke.getFieldObject("android.app.ActivityThread", currentActivityThread, "mH");
-
-        RefInvoke.setFieldObject(Handler.class, mH, "mCallback", new ActivityThreadHandlerCallback(mH));
     }
 
 
