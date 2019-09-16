@@ -1,1 +1,1 @@
-include ':app', ':plugincore', ':studiostub'
+include ':app', ':plugincore', ':studiostub', ':plugin1'

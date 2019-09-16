@@ -4,6 +4,9 @@ import android.app.Application;
 import android.content.Context;
 
 import com.xiashengming.plugin.PluginManager;
+import com.xiashengming.plugin.utils.CopyApkUtils;
+
+import java.io.File;
 
 public class DemoApplication extends Application {
 
@@ -16,6 +19,6 @@ public class DemoApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        PluginManager.getInstance(this).init();
+        PluginManager.getInstance().init(this);
     }
 }
