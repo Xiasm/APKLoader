@@ -19,6 +19,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         toPluginActivity(null);
+        loadPlugin(null);
     }
 
     public void toPluginActivity(View view) {
